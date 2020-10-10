@@ -1,49 +1,47 @@
-%plz credit- Deniz Beste Akdogdu mailto:dbesteakdogdu@gmail.com 09.2020
+%% Deniz Beste Akdogdu
+%% dbesteakdogdu@gmail.com
+
 clear all; close all; clc;
-y1=[]; %struct of y coordinates to crop the videos
+y1=[]; % y coordinates to crop the videos
 y2=[];
-f1=[]; %struct of video frames to trim the videos (in this case, frame rate is 60 per sec, so required frame=60*second
+f1=[]; % video frames to trim the videos (if frame rate is 60 per sec, required frame is calculated as 60*second)
 f2=[];
 %read video info from excel
-a = xlsread('video_info.xlsx','(B2:F9)');  % Load the video information data,
-[~,txtData]  = xlsread('video_info.xlsx','A2:A9'); %reads the strings in the first column of the excel (a)
-for j=2:(length(txtData)+1)
-    y1=  a(:,2);  % takes the 2nd column from the described excel borders (a)
-    y2 = a(:,3);
-    f1 = a(:,4);
-    f2 = a(:,5);
+[num,txt,data] = xlsread('video_info.xlsx');
+
+% takes the columns of the corresponding parameters from the excel file
+for j=1:length(txt)
+    y1 = data(:,2);
+    y2 = data(:,3);
+    f1 = data(:,4);
+    f2 = data(:,5);
 end
 
-rootPath = 'project/path/';
-videosPathToBeEdited = rootPath + 'videos/path';
-editedVideosDirName = 'editedVideosDirName';
-editedVideosPath = rootPath + editedVideosDirname;
+rootPath = 'C:\Users\beste\Desktop\Projects\trim-and-crop-videos\';
+videosPathToBeEdited = 'C:\Users\beste\Desktop\Projects\trim-and-crop-videos\raw_videos\';
+editedVideosFolderPath = 'C:\Users\beste\Desktop\Projects\trim-and-crop-videos\edited_videos\';
 
-%directory of the videos to be edited
-videos =dir(videosPathToBeEdited);
-%create a new folder for the edited result videos
-mkdir (rootPath, editedVideosDirName);
-%set path to the new created folder
-cd editedVideosPath
-%edit and save (cropped and trimmed) the videos to this folder
-i=1;
+videos = dir(videosPathToBeEdited);
+cd(fullfile(editedVideosFolderPath));
+
+j=2;
+% Reads raw videos; trims, crops and saves it to a new video file
 for k=3:length(videos)
     vidName = videos(k).name;
-    v = VideoReader(vidName);
-    trimVideo = VideoWriter(strcat(vidName, '_trimmed'),'MPEG-4'); %name the new video
-    trimVideo.FrameRate = 60; %making sure the frame rate is same as the original video
-    open(trimVideo);
-    %Read and write each frame.
-    for f=f1(i):f2(i) %insert start and end frames to trim
-        vidFrames = read(v,f);
-        cropped=imcrop(vidFrames,[0 y1(i) 1080 y2(i)]); %crop video borders
-        writeVideo(trimVideo,cropped);
-    end
-    close(trimVideo);
-    i=i+1;
+    vidPath = strcat(videosPathToBeEdited, vidName);
     
+    v = VideoReader(vidPath);
+    
+    newVideoFile = VideoWriter(strcat(strrep(vidName,'.avi', ''), '_edited'),'MPEG-4'); 
+    newVideoFile.FrameRate = 60; %making sure the frame rate is same as the original video
+    open(newVideoFile);
+    
+    %Read and write each frame.
+    for f=cell2mat(f1(j)):cell2mat(f2(j)) %insert start and end frames to trim
+        vidFrames = read(v, f);
+        cropped=imcrop(vidFrames,[0 cell2mat(y1(j)) 1080 cell2mat(y2(j))]); % crop video borders
+        writeVideo(newVideoFile,cropped);
+    end
+    close(newVideoFile);
+    j=j+1;
 end
-
-
-
-
